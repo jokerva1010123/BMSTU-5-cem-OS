@@ -1,0 +1,15 @@
+.vscode/
+*.aux
+*.log
+*.gz
+*.out
+*.o
+*.exe
+*.d
+*.ko
+*.symvers
+*.mod
+*.orders
+*.cmd
+*.order
+*.mod.c
