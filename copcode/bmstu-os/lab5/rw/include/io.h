@@ -15,6 +15,11 @@
 #define READER 0
 #define WRITER 1
 
+#define ACT_READER 0
+#define ACT_WRITER 1
+#define BIN_ACT_WRITER 2
+#define WAIT_WRITER 3
+
 #define READ_QUEUE 2
 #define WRITE_QUEUE 3
 

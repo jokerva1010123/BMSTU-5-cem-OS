@@ -10,43 +10,65 @@
 #include <unistd.h>
 #include <wait.h>
 
-#include "buffer.h"
-#include "runners.h"
+#include "../include/buffer.h"
+#include "../include/runners.h"
 
 #define MAX_SEMS 3
 
-int main(void) {
+int main(void) 
+{
     setbuf(stdout, NULL);
+    // Создаём новый разделяемый сегмент памяти для структуры буфера
     int fd = shmget(IPC_PRIVATE, 
                     sizeof(cycle_buff_t),
-                    IPC_CREAT | S_IRWXU | S_IRWXG | S_IRWXO);
-    if (fd == -1) {
+                    IPC_CREAT | S_IRWXU | S_IRWXG | S_IRWXO); // Флаг создания сегмента и флаги выдачи прав
+    if (fd == -1) 
+    {
         perror("shmget failed!");
         return EXIT_FAILURE;
     }
 
     cycle_buff_t *buffer;
-    if ((buffer = shmat(fd, 0, 0)) == (void *)-1) {
+    
+    // Подключаем разделяемый сегмент к адресному пространству и записываем адрес в переменную
+    if ((buffer = shmat(fd, 0, 0)) == (void *)-1) 
+    {
         perror("shmat failed!");
         return EXIT_FAILURE;
     }
 
-    if (buff_init(buffer) == -1) {
+    if (buff_init(buffer) == -1) 
+    {
         perror("init failed!");
         return EXIT_FAILURE;
     }
-
+    
+    // Создаётся новый набор семафоров (3 семафора)
     int sid = semget(IPC_PRIVATE, 
                      MAX_SEMS,
                      IPC_CREAT | S_IRWXU | S_IRWXG | S_IRWXO);
-    if (sid == -1) {
+    if (sid == -1) 
+    {
         perror("semget failed!");
         return EXIT_FAILURE;
     }
-
-    semctl(sid, BIN_SEM, SETVAL, 1);
-    semctl(sid, BUF_EMPTY, SETVAL, N);
-    semctl(sid, BUF_FULL, SETVAL, 0);
+    
+    // Изменение управляющих параметров наборов семафоров
+    if (semctl(sid, BIN_SEM, SETVAL, 1) == -1)
+    {
+        perror("semctl failed!");
+        return EXIT_FAILURE;
+    }
+    else if (semctl(sid, BUF_EMPTY, SETVAL, N) == -1)
+    {
+        perror("semctl; failed!");
+        return EXIT_FAILURE;
+    }
+    else if (semctl(sid, BUF_FULL, SETVAL, 0) == -1)
+    {
+        perror("semctl failed!");
+        return EXIT_FAILURE;
+    }
 
     int child_pid;
     for (short i = 0; i < PROD_COUNT; ++i) {
@@ -82,10 +104,12 @@ int main(void) {
         if (!WIFEXITED(status))
             puts("unexpected termination");
     }
-
+    
+    // "Отключение" сегмента от адресного пространства
     if (shmdt((void *)buffer) == -1 || 
         shmctl(fd, IPC_RMID, NULL) == -1 ||
-        semctl(sid, IPC_RMID, 0) == -1) {
+        semctl(sid, IPC_RMID, 0) == -1) 
+    {
         perror("exit error!");
 
         return EXIT_FAILURE;

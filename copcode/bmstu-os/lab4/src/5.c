@@ -1,76 +1,91 @@
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <signal.h>
 
-int pid;
-int child_pids[2];
-const char volatile *msg[] = {"message1", "message2"};
+#define SLEEP_TIME 3
+#define TRUE 1
+#define FALSE 0
 
-int state = 0;
+int children_pids[2];
+const char volatile *messages[] = {"\n1. Первое сообщение\n", "2. SecMes"};
+int flag = FALSE;
 
-void ignore_sigint(int sig) {}
+void catch_signal(int signal)
+{
+    printf("\nCatched signal: %d\n", signal);
+    flag = TRUE;
+}
 
-void is_writing(int sig) { state = 1; }
-
-int main() {
+int main(void) 
+{
     int fd[2];
-    char buffer[50] = {0};
-
+    char buf[50] = {0};
     printf("Parent process: PID=%d, GROUP=%d\n", getpid(), getpgrp());
 
-    if (pipe(fd) == -1) {
+    signal(SIGINT, catch_signal);
+    sleep(SLEEP_TIME);
+    
+    if (pipe(fd) == -1) 
+    {
         perror("Can't pipe\n");
         return EXIT_FAILURE;
     }
 
-    signal(SIGINT, ignore_sigint);
-    for (size_t i = 0; i < 2; ++i) {
-        switch (pid = fork()) {
-            case -1:
-                perror("Can't fork\n");
-                exit(EXIT_FAILURE);
-            case 0:
-                signal(SIGINT, is_writing);
-                sleep(5);
-                if (state) {
-                    close(fd[0]);
-                    write(fd[1], msg[i], strlen(msg[i]));
-                    printf("Message has been sent to parent\n");
-                } else {
-                    printf("No signal sent, writing will not be completed\n");
-                }
-
-                exit(EXIT_SUCCESS);
-            default:
-                child_pids[i] = pid;
+    for (size_t i = 0; i < 2; i++) 
+    {
+    	int pid; 
+    	if ((pid  = fork()) == -1)
+        {
+           perror("Can't fork\n");
+           return EXIT_FAILURE;
+        }
+        else if (pid == 0)
+        {
+            printf("\nChild process : PID=%d, GROUP=%d, PPID=%d\n", getpid(), getpgrp(), getppid());
+            if (flag == TRUE)
+            {
+                close(fd[0]);
+                write(fd[1], messages[i], strlen(messages[i]));
+                printf("Message from child has been sent to parent\n");
+            }
+            exit(EXIT_SUCCESS);
+        }
+        else
+        {
+            children_pids[i] = pid;
         }
     }
 
-    for (size_t i = 0; i < 2; ++i) {
+    for (size_t i = 0; i < 2; i++) 
+    {
         int status;
         pid_t childpid = wait(&status);
-        printf("Child process finished: PID = %d, status = %d\n", childpid, status);
+        printf("\n\nChild process finished: PID = %d, status = %d\n", childpid, status);
 
-        int stat_val;
-        if (WIFEXITED(stat_val)) {
-            printf("Child process exited with code %d\n",
-                   WEXITSTATUS(stat_val));
-        } else {
-            printf("Child process terminated abnormally\n");
+        if (WIFEXITED(status)) 
+        {
+            printf("Дочерний процесс завершён корректно.\n");
+            printf("Child process exited with code %d\n", WEXITSTATUS(status));
+        } 
+        else if (WIFSIGNALED(status))
+        {
+            printf("Дочерний процесс завершен неперехватываемым сигналом\n");
+            printf("Номер сигнала: \t%d\n\n", WTERMSIG(status));
+        }
+        else if (WIFSTOPPED(status))
+        {
+            printf ("Дочерний процесс остановлен\n");
+            printf ("Номер сигнала: \t%d\n\n", WSTOPSIG (status));
         }
     }
 
     close(fd[1]);
-    read(fd[0], buffer, sizeof(buffer));
-
-    printf("Received message: %s\n", buffer);
-    printf("Parent process have children with IDs: %d, %d\n", child_pids[0],
-           child_pids[1]);
-    printf("Parent process is dead now\n");
+    read(fd[0], buf, sizeof(buf));
+    printf("\nReceived messages: %s\n", buf);
 
     return EXIT_SUCCESS;
 }

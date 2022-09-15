@@ -4,50 +4,80 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-int pid;
-int child_pids[2];
-const char volatile *const cmd[2] = {"ls", "whoami"};
+#define OK 0
+#define EXEC_ERROR -1
+#define ERROR -1
+#define SLEEP_TIME 3
 
-int main() {
+int children_pids[2];
+
+int main(void) 
+{
     printf("Parent process: PID=%d, GROUP=%d\n", getpid(), getpgrp());
-
-    for (size_t i = 0; i < 2; ++i) {
-        switch (pid = fork()) {
-            case -1:
-                perror("Can't fork\n");
-                return EXIT_FAILURE;
-            case 0:
-                printf("Child process : PID=%d, GROUP=%d, PPID=%d\n\n",
-                       getpid(), getpgrp(), getppid());
-
-                switch (execlp(cmd[i], cmd[i], 0)) {
-                    case -1:
-                        perror("Can't exec\n");
-                        return EXIT_FAILURE;
-                    case 0:
-                        return EXIT_SUCCESS;
-                }
-            default:
-                child_pids[i] = pid;
+    
+    int pid; 
+    if ((pid  = fork()) == -1)
+    {
+        perror("Can't fork\n");
+        return EXIT_FAILURE;
+    }
+    else if (pid == 0)
+    {
+        printf("\nChild process : PID=%d, GROUP=%d, PPID=%d\n", getpid(), getpgrp(), getppid());
+        if (execlp ("./qck/quicksort.exe", "quicksort.exe", NULL) == EXEC_ERROR)
+        {
+            printf ("\nError : Child 1 can not execute exec ()\n");
+            exit(ERROR);
         }
+        exit(OK);
+    }
+    else
+    {
+        children_pids[0] = pid;
     }
 
-    for (size_t i = 0; i < 2; ++i) {
+    
+    if ((pid  = fork()) == -1)
+    {
+        perror("Can't fork\n");
+        return EXIT_FAILURE;
+    }
+    else if (pid == 0)
+    {
+        printf("\nChild process : PID=%d, GROUP=%d, PPID=%d\n\n", getpid(), getpgrp(), getppid());
+        if (execlp ("./aa/app.exe", "app.exe", NULL) == EXEC_ERROR)
+        {
+            printf ("\nError : Child 2 can not execute exec ()\n");
+            exit(ERROR);
+        }
+        exit(OK);
+    }
+    else
+    {
+        children_pids[1] = pid;
+    }
+
+    for (size_t i = 0; i < 2; i++) 
+    {
         int status;
         pid_t childpid = wait(&status);
-        printf("\nChild process finished: PID = %d, status = %d\n", childpid, status);
-        int stat_val;
-        if (WIFEXITED(stat_val)) {
-            printf("Child process exited with code %d\n",
-                   WEXITSTATUS(stat_val));
-        } else {
-            printf("Child process terminated abnormally\n");
+        printf("\n\nChild process finished: PID = %d, status = %d\n", childpid, status);
+
+        if (WIFEXITED(status)) 
+        {
+            printf("Child process exited with code %d\n\n\n", WEXITSTATUS(status));
+        } 
+        else if (WIFSIGNALED(status))
+        {
+            printf("Дочерний процесс завершен неперехватываемым сигналом\n");
+            printf("Номер сигнала: \t%d\n\n", WTERMSIG(status));
+        }
+        else if (WIFSTOPPED(status))
+        {
+            printf ("Дочерний процесс остановлен\n");
+            printf ("Номер сигнала: \t%d\n\n", WSTOPSIG (status));
         }
     }
-
-    printf("Parent process have children with IDs: %d, %d\n", child_pids[0],
-           child_pids[1]);
-    printf("Parent process is dead now\n");
 
     return EXIT_SUCCESS;
 }

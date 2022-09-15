@@ -4,44 +4,56 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-int pid;
-int child_pids[2];
+#define SLEEP_TIME 3
 
-int main(void) {
+int children_pids[2];
+
+int main(void) 
+{
     printf("Parent process: PID=%d, GROUP=%d\n", getpid(), getpgrp());
 
-    for (size_t i = 0; i < 2; ++i) {
-        switch (pid = fork()) {
-            case -1:
-                perror("Can't fork\n");
-                return EXIT_FAILURE;
-            case 0:
-                sleep(2);
-                printf("Child process : PID=%d, GROUP=%d, PPID=%d\n", getpid(),
-                       getpgrp(), getppid());
-                return EXIT_FAILURE;
-            default:
-                child_pids[i] = pid;
+    for (size_t i = 0; i < 2; i++) 
+    {
+    	int pid; 
+    	if ((pid  = fork()) == -1)
+        {
+           perror("Can't fork\n");
+           return EXIT_FAILURE;
+        }
+        else if (pid == 0)
+        {
+           sleep(SLEEP_TIME);
+           printf("\nChild process : PID=%d, GROUP=%d, PPID=%d\n", getpid(), getpgrp(), getppid());
+           return EXIT_SUCCESS;
+        }
+        else
+        {
+            children_pids[i] = pid;
         }
     }
 
-    for (size_t i = 0; i < 2; ++i) {
+    for (size_t i = 0; i < 2; i++) 
+    {
         int status;
         pid_t childpid = wait(&status);
-        printf("Child process finished: PID = %d, status = %d\n", childpid, status);
+        printf("\n\nChild process finished: PID = %d, status = %d\n", childpid, status);
 
-        int stat_val;
-        if (WIFEXITED(stat_val)) {
-            printf("Child process exited with code %d\n",
-                   WEXITSTATUS(stat_val));
-        } else {
-            printf("Child process terminated abnormally\n");
+        if (WIFEXITED(status)) 
+        {
+            printf("Дочерний процесс завершён корректно.\n");
+            printf("Child process exited with code %d\n", WEXITSTATUS(status));
+        } 
+        else if (WIFSIGNALED(status))
+        {
+            printf("Дочерний процесс завершен неперехватываемым сигналом\n");
+            printf("Номер сигнала: \t%d\n\n", WTERMSIG(status));
+        }
+        else if (WIFSTOPPED(status))
+        {
+            printf ("Дочерний процесс остановлен\n");
+            printf ("Номер сигнала: \t%d\n\n", WSTOPSIG (status));
         }
     }
-
-    printf("Parent process have children with IDs: %d, %d\n", child_pids[0],
-           child_pids[1]);
-    printf("Parent process is dead now\n");
 
     return EXIT_SUCCESS;
 }

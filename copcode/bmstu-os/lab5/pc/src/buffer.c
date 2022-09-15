@@ -1,7 +1,9 @@
-#include "buffer.h"
+#include "../include/buffer.h"
 
-int buff_init(cycle_buff_t *const buffer) {
-    if (!buffer) {
+int buff_init(cycle_buff_t *const buffer) 
+{
+    if (!buffer) 
+    {
         return -1;
     }
     memset(buffer, 0, sizeof(cycle_buff_t));
@@ -9,8 +11,10 @@ int buff_init(cycle_buff_t *const buffer) {
     return 0;
 }
 
-int buff_write(cycle_buff_t *const buffer, const char c) {
-    if (!buffer) {
+int buff_write(cycle_buff_t *const buffer, const char c) 
+{
+    if (!buffer) 
+    {
         return -1;
     }
     buffer->data[buffer->wpos++] = c;
@@ -19,8 +23,10 @@ int buff_write(cycle_buff_t *const buffer, const char c) {
     return 0;
 }
 
-int buff_read(cycle_buff_t *const buffer, char *const dst) {
-    if (!buffer) {
+int buff_read(cycle_buff_t *const buffer, char *const dst) 
+{
+    if (!buffer) 
+    {
         return -1;
     }
     *dst = buffer->data[buffer->rpos++];
