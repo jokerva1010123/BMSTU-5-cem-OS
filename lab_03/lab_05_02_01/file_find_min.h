@@ -1,0 +1,1 @@
+int file_find_min(const char *filename, double *min);

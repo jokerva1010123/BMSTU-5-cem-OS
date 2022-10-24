@@ -1,0 +1,1 @@
+int file_find_max(const char *filename, double *max);
