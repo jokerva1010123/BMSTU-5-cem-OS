@@ -182,13 +182,14 @@ int main(int argc, char *argv[])
         cmd = argv[0];
     else
         cmd++;
-
+    //Перейти в режим демона.
     daemonize(cmd);
-
+    //Убедиться, что ранее не была запущена другая копия демона.
     if (already_running() < 0)
         exit(1);
 
     // Обработчик по умолчанию
+    //Восстановить действие по умолчанию для сигнала SIGHUP и заблокировать все сигналы.
     sa.sa_handler = SIG_DFL; 
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
@@ -206,6 +207,7 @@ int main(int argc, char *argv[])
         syslog(LOG_ERR, "Ошибка при блокировке сигналов");
         exit(1);
     }
+    //Создать поток для обработки SIGHUP и SIGTERM.
     // tid - id нового потока, NULL - атрибуты по умолчанию для нового потока
     // thr_fn - функция, которую выполняет поток, 0 - аргумент, передаваемый функции
     if (pthread_create(&tid, NULL, thr_fn, 0) != 0)
