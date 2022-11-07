@@ -34,7 +34,7 @@
 - STAT - состояние процесса;
     Состояния:
     - S - interruptable sleep;
-    - D - uninterruptable sleep (I/O);
+    - D - uninterruptable sleep (ожидание завершения устройства I/O);
     - I - работа в режиме ядра.
     Доп:
     - s - лидер сессии;
