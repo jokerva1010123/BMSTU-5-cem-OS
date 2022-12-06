@@ -1,0 +1,31 @@
+#include <sys/ipe.h>
+#include <sys/shm.h>
+
+{
+	key_t key;
+	int fd;
+	key = ftok("/usr/testfile", 3);
+	fd = shmget(key, 100, IPC_CREATE|perms);
+	addr = shmat(fd, NULL, 0);
+}
+VD
+
+int main(void)
+{
+	key_t key;
+	int semid;
+	struct sembuf sb = {0, -1, 0};
+	union semun arg;
+	if((key = ftok("semdemo.c", 'y')) == -1)
+	{
+		perror('ftok');
+		exit(1);
+	}
+	if((semid = semget(key, 1, 0666, IPC_CREATE)) == -1)
+	{
+		perror('semget');exit(1);
+	}
+	if(semop(semid, &sb, 1) == -1)
+	{
+		perror('semop');exit(1);
+	}
