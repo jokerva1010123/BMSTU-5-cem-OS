@@ -10,7 +10,7 @@
     ps -axj
 Посмотреть log:
     tail -n 100 /var/log/syslog
-    sudo -F "var/log/syslog" | grep app.exe
+    sudo dmesg -F "var/log/syslog" | grep app.exe
 Посмотреть номера сигналов:
     kill -l
 Отправить SIGHUP:
