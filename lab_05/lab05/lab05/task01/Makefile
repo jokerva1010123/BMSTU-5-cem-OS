@@ -47,3 +47,4 @@ func : release
 clean :
 	rm -f *.exe
 	rm -fr $(OUTDIR)
+	rm -f app

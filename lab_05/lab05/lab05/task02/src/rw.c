@@ -125,7 +125,6 @@ void run_reader(int *const counter, const int sid, const int rid)
 	if (stop_read(sid) == -1)
 	{
 		perror("Something went wrong with stop_read!");
-
         exit(-1);
 	}
 }
