@@ -104,7 +104,7 @@ int main(void)
             perror("Something wrong with children waiting!");
             return -1;
         }
-
+		
         if (!WIFEXITED(status))
             printf("One of children terminated abnormally!\n");
     }

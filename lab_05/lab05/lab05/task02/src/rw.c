@@ -34,9 +34,11 @@ struct sembuf writer_release[2] =
 
 struct sembuf reader_begin[3] = 
 {
+	
     {ACTIVE_WRITERS, 0, 0},
     {WAITING_WRITERS, 0, 0},
     {ACTIVE_READERS, 1, 0},
+
 };
 
 struct sembuf reader_release[1] = 
